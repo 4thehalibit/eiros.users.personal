@@ -184,7 +184,7 @@ in
       Restart          = "on-failure";
       RestartSec       = "5s";
       RuntimeDirectory = "kbd-leds";
-      RuntimeDirectoryMode = "0755";
+      RuntimeDirectoryMode = "0777";
     };
   };
 }
