@@ -5,15 +5,15 @@ let
 
   script = pkgs.writeScript "kbd-typing-leds" ''
     #!${python}/bin/python3
-    import evdev, subprocess, threading, time, sys
+    import evdev, glob, os, subprocess, threading, time, sys
 
-    BACKLIGHT    = "/sys/class/leds/framework_laptop::kbd_backlight/brightness"
-    INPUTMODULE  = "${inputmodule}/bin/inputmodule-control"
-    MAX_BL       = 100
-    FADE_STEP    = 3
-    FADE_TICK    = 0.03   # seconds between backlight fade ticks
-    IDLE_BL      = 1.5    # seconds idle before backlight starts fading
-    IDLE_MATRIX  = 3.0    # seconds idle before matrix clears
+    BACKLIGHT   = "/sys/class/leds/framework_laptop::kbd_backlight/brightness"
+    INPUTMODULE = "${inputmodule}/bin/inputmodule-control"
+    MAX_BL      = 100
+    FADE_STEP   = 3
+    FADE_TICK   = 0.03
+    IDLE_BL     = 1.5
+    IDLE_MATRIX = 3.0
 
     brightness    = 0
     last_key_time = 0.0
@@ -30,8 +30,28 @@ let
 
     def key_to_char(name):
         if name.startswith('KEY_') and len(name) == 5:
-            return name[4]          # KEY_A -> A, KEY_1 -> 1, etc.
+            return name[4]
         return CHAR_MAP.get(name)
+
+    def find_led_matrices():
+        """Find /dev/ttyACM* devices belonging to Framework LED Matrix (32ac:0020)."""
+        found = []
+        for tty in sorted(glob.glob('/dev/ttyACM*')):
+            name = os.path.basename(tty)
+            try:
+                path = os.path.realpath(f'/sys/class/tty/{name}/device')
+                while path and path != '/':
+                    vid_file = os.path.join(path, 'idVendor')
+                    if os.path.exists(vid_file):
+                        with open(vid_file) as f: vid = f.read().strip()
+                        with open(os.path.join(path, 'idProduct')) as f: pid = f.read().strip()
+                        if vid == '32ac' and pid == '0020':
+                            found.append(tty)
+                        break
+                    path = os.path.dirname(path)
+            except Exception:
+                pass
+        return found
 
     def write_bl(val):
         try:
@@ -41,13 +61,14 @@ let
             pass
 
     def matrix(*args):
-        try:
-            subprocess.run(
-                [INPUTMODULE, 'led-matrix'] + list(args),
-                timeout=2, capture_output=True,
-            )
-        except Exception:
-            pass
+        for dev in LED_MATRICES:
+            try:
+                subprocess.run(
+                    [INPUTMODULE, '--serial-dev', dev, 'led-matrix'] + list(args),
+                    timeout=2, capture_output=True,
+                )
+            except Exception:
+                pass
 
     def matrix_worker():
         global pending_text
@@ -86,6 +107,10 @@ let
                 return dev
         return None
 
+    LED_MATRICES = find_led_matrices()
+    if not LED_MATRICES:
+        print("No Framework LED Matrix modules found", file=sys.stderr)
+
     kbd = find_keyboard()
     if kbd is None:
         print("Framework keyboard not found", file=sys.stderr)
@@ -114,9 +139,9 @@ let
   '';
 in
 {
-  # Let regular users run inputmodule-control without sudo
+  # Grant seat user access to LED matrix hidraw + serial devices
   services.udev.extraRules = ''
-    SUBSYSTEMS=="usb", ATTRS{idVendor}=="32ac", ATTRS{idProduct}=="0020", MODE="0660", TAG+="uaccess"
+    SUBSYSTEMS=="usb", ATTRS{idVendor}=="32ac", ATTRS{idProduct}=="0020", MODE="0660", TAG+="uaccess", GROUP="dialout"
   '';
 
   environment.systemPackages = [ inputmodule ];

@@ -6,5 +6,6 @@
     "libvirtd"
     "docker"
     "input"
+    "dialout"
   ];
 }
