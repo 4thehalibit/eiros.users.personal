@@ -3,23 +3,48 @@ let
   inputmodule = pkgs.inputmodule-control;
   python = pkgs.python3.withPackages (ps: [ ps.evdev ]);
 
+  brightnessFile = "/run/kbd-leds/brightness";
+  defaultBrightness = 40;
+
+  brightnessDown = pkgs.writeShellScriptBin "kbd-brightness-down" ''
+    val=$(cat ${brightnessFile} 2>/dev/null || echo ${toString defaultBrightness})
+    val=$(( val - 10 ))
+    [ $val -lt 5 ] && val=5
+    echo $val > ${brightnessFile}
+  '';
+
+  brightnessUp = pkgs.writeShellScriptBin "kbd-brightness-up" ''
+    val=$(cat ${brightnessFile} 2>/dev/null || echo ${toString defaultBrightness})
+    val=$(( val + 10 ))
+    [ $val -gt 100 ] && val=100
+    echo $val > ${brightnessFile}
+  '';
+
   script = pkgs.writeScript "kbd-typing-leds" ''
     #!${python}/bin/python3
     import evdev, glob, os, subprocess, threading, time, sys
 
-    BACKLIGHT   = "/sys/class/leds/framework_laptop::kbd_backlight/brightness"
-    INPUTMODULE = "${inputmodule}/bin/inputmodule-control"
-    MAX_BL      = 100
-    FADE_STEP   = 3
-    FADE_TICK   = 0.03
-    IDLE_BL     = 1.5
-    IDLE_MATRIX = 3.0
+    BACKLIGHT        = "/sys/class/leds/framework_laptop::kbd_backlight/brightness"
+    INPUTMODULE      = "${inputmodule}/bin/inputmodule-control"
+    BRIGHTNESS_FILE  = "${brightnessFile}"
+    DEFAULT_MAX_BL   = ${toString defaultBrightness}
+    FADE_STEP        = 3
+    FADE_TICK        = 0.03
+    IDLE_BL          = 1.5
+    IDLE_MATRIX      = 3.0
 
     brightness    = 0
     last_key_time = 0.0
     char_buf      = []
     pending_text  = None
     lock          = threading.Lock()
+
+    def read_max_bl():
+        try:
+            with open(BRIGHTNESS_FILE) as f:
+                return max(5, min(100, int(f.read().strip())))
+        except Exception:
+            return DEFAULT_MAX_BL
 
     CHAR_MAP = {
         'KEY_SPACE': ' ', 'KEY_MINUS': '-', 'KEY_EQUAL': '=',
@@ -72,7 +97,7 @@ let
 
     def matrix_worker():
         global pending_text
-        matrix('--brightness', '100')
+        matrix('--brightness', str(read_max_bl()))
         matrix_was_on = False
         while True:
             time.sleep(0.05)
@@ -82,7 +107,7 @@ let
                 idle  = time.monotonic() - last_key_time
             if text is not None:
                 if not matrix_was_on:
-                    matrix('--brightness', '100')
+                    matrix('--brightness', str(read_max_bl()))
                 matrix_was_on = True
                 matrix('--string', text)
             elif idle > IDLE_MATRIX and matrix_was_on:
@@ -132,7 +157,7 @@ let
 
         with lock:
             last_key_time = time.monotonic()
-            brightness    = MAX_BL
+            brightness    = read_max_bl()
             write_bl(brightness)
             if char is not None:
                 char_buf.append(char)
@@ -147,17 +172,19 @@ in
     SUBSYSTEMS=="usb", ATTRS{idVendor}=="32ac", ATTRS{idProduct}=="0020", MODE="0660", TAG+="uaccess", GROUP="dialout"
   '';
 
-  environment.systemPackages = [ inputmodule ];
+  environment.systemPackages = [ inputmodule brightnessDown brightnessUp ];
 
   systemd.services.kbd-typing-leds = {
     description = "Keyboard backlight + LED matrix typing effects";
     wantedBy    = [ "multi-user.target" ];
     after       = [ "systemd-udev-settle.service" ];
     serviceConfig = {
-      Type      = "simple";
-      ExecStart = "${script}";
-      Restart   = "on-failure";
-      RestartSec = "5s";
+      Type             = "simple";
+      ExecStart        = "${script}";
+      Restart          = "on-failure";
+      RestartSec       = "5s";
+      RuntimeDirectory = "kbd-leds";
+      RuntimeDirectoryMode = "0755";
     };
   };
 }

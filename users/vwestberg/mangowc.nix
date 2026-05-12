@@ -89,6 +89,10 @@
     # Keybinding cheat sheet
     keybinds_cheatsheet = { modifier_keys = [ "SUPER" ]; flag_modifiers = [ "s" ]; key_symbol = "F1"; mangowc_command = "spawn"; command_arguments = "ghostty --title=keybinds-popup -e keybinds-popup"; };
 
+    # LED matrix brightness
+    kbd_brightness_down = { modifier_keys = [ "SUPER" ]; flag_modifiers = [ "s" ]; key_symbol = "F7"; mangowc_command = "spawn_shell"; command_arguments = "kbd-brightness-down"; };
+    kbd_brightness_up   = { modifier_keys = [ "SUPER" ]; flag_modifiers = [ "s" ]; key_symbol = "F8"; mangowc_command = "spawn_shell"; command_arguments = "kbd-brightness-up"; };
+
     # Media controls on Insert/Home/PageUp/Delete/End/PageDown cluster
     media_previous     = { modifier_keys = [ ];flag_modifiers = [ "s" ]; key_symbol = "Insert";  mangowc_command = "spawn_shell"; command_arguments = "playerctl previous"; };
     media_play_pause   = { modifier_keys = [ ];flag_modifiers = [ "s" ]; key_symbol = "Home";    mangowc_command = "spawn_shell"; command_arguments = "playerctl play-pause"; };
