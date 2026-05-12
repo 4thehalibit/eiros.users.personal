@@ -110,7 +110,7 @@ let
                 char_buf.append(char)
                 if len(char_buf) > 5:
                     char_buf.pop(0)
-                pending_text = ''.join(char_buf)
+                pending_text = '''.join(char_buf)
   '';
 in
 {
