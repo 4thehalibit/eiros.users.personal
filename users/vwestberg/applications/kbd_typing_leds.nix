@@ -81,6 +81,8 @@ let
                 pending_text = None
                 idle  = time.monotonic() - last_key_time
             if text is not None:
+                if not matrix_was_on:
+                    matrix('--brightness', '100')
                 matrix_was_on = True
                 matrix('--string', text)
             elif idle > IDLE_MATRIX and matrix_was_on:
