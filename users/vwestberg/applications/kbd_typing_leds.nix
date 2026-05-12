@@ -111,7 +111,8 @@ let
 
     LED_MATRICES = find_led_matrices()
     if not LED_MATRICES:
-        print("No Framework LED Matrix modules found", file=sys.stderr)
+        print("No Framework LED Matrix modules found, will retry", file=sys.stderr)
+        sys.exit(1)
 
     kbd = find_keyboard()
     if kbd is None:
