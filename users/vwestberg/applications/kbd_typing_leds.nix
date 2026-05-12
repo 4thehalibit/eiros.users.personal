@@ -97,17 +97,23 @@ let
 
     def matrix_worker():
         global pending_text
-        matrix('--brightness', str(read_max_bl()))
+        last_brightness = read_max_bl()
+        matrix('--brightness', str(last_brightness))
         matrix_was_on = False
         while True:
             time.sleep(0.05)
+            cur_brightness = read_max_bl()
             with lock:
                 text  = pending_text
                 pending_text = None
                 idle  = time.monotonic() - last_key_time
+            if cur_brightness != last_brightness:
+                last_brightness = cur_brightness
+                if matrix_was_on:
+                    matrix('--brightness', str(cur_brightness))
             if text is not None:
                 if not matrix_was_on:
-                    matrix('--brightness', str(read_max_bl()))
+                    matrix('--brightness', str(cur_brightness))
                 matrix_was_on = True
                 matrix('--string', text)
             elif idle > IDLE_MATRIX and matrix_was_on:
