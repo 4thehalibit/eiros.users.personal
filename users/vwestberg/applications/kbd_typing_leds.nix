@@ -81,7 +81,7 @@ let
     def write_bl(val):
         try:
             with open(BACKLIGHT, 'w') as f:
-                f.write(str(max(0, min(MAX_BL, int(val)))))
+                f.write(str(max(0, min(read_max_bl(), int(val)))))
         except OSError:
             pass
 
