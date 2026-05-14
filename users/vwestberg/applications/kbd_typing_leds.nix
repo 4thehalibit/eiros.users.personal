@@ -22,7 +22,7 @@ let
 
   script = pkgs.writeScript "kbd-typing-leds" ''
     #!${python}/bin/python3
-    import evdev, glob, os, subprocess, threading, time, sys
+    import evdev, glob, math, os, subprocess, threading, time, sys
 
     BACKLIGHT        = "/sys/class/leds/framework_laptop::kbd_backlight/brightness"
     INPUTMODULE      = "${inputmodule}/bin/inputmodule-control"
@@ -32,11 +32,12 @@ let
     FADE_TICK        = 0.03
     IDLE_BL          = 1.5
     IDLE_MATRIX      = 3.0
+    PULSE_DECAY      = 4.5   # higher = faster decay
+    PULSE_TTL        = 2.0   # seconds before a pulse is discarded
 
     brightness    = 0
     last_key_time = 0.0
-    char_buf      = []
-    pending_text  = None
+    pulses        = []       # timestamps of recent keypresses
     lock          = threading.Lock()
 
     def read_max_bl():
@@ -45,18 +46,6 @@ let
                 return max(5, min(100, int(f.read().strip())))
         except Exception:
             return DEFAULT_MAX_BL
-
-    CHAR_MAP = {
-        'KEY_SPACE': ' ', 'KEY_MINUS': '-', 'KEY_EQUAL': '=',
-        'KEY_LEFTBRACE': '[', 'KEY_RIGHTBRACE': ']', 'KEY_SEMICOLON': ';',
-        'KEY_APOSTROPHE': "'", 'KEY_COMMA': ',', 'KEY_DOT': '.',
-        'KEY_SLASH': '/', 'KEY_BACKSLASH': '\\', 'KEY_GRAVE': '`',
-    }
-
-    def key_to_char(name):
-        if name.startswith('KEY_') and len(name) == 5:
-            return name[4]
-        return CHAR_MAP.get(name)
 
     def find_led_matrices():
         """Find /dev/ttyACM* devices belonging to Framework LED Matrix (32ac:0020)."""
@@ -96,29 +85,39 @@ let
                 pass
 
     def matrix_worker():
-        global pending_text
+        global pulses
         last_brightness = read_max_bl()
         matrix('--brightness', str(last_brightness))
         matrix_was_on = False
         while True:
-            time.sleep(0.05)
+            time.sleep(0.025)
+            now = time.monotonic()
             cur_brightness = read_max_bl()
             with lock:
-                text  = pending_text
-                pending_text = None
-                idle  = time.monotonic() - last_key_time
+                idle         = now - last_key_time
+                local_pulses = list(pulses)
+                pulses       = [pt for pt in pulses if now - pt < PULSE_TTL]
             if cur_brightness != last_brightness:
                 last_brightness = cur_brightness
                 if matrix_was_on:
                     matrix('--brightness', str(cur_brightness))
-            if text is not None:
+            if idle > IDLE_MATRIX:
+                if matrix_was_on:
+                    matrix_was_on = False
+                    matrix('--brightness', '0')
+                continue
+            level = 0
+            for pt in local_pulses:
+                age = now - pt
+                if age < PULSE_TTL:
+                    level = max(level, int(34 * math.exp(-age * PULSE_DECAY)))
+            if level > 0:
                 if not matrix_was_on:
                     matrix('--brightness', str(cur_brightness))
-                matrix_was_on = True
-                matrix('--string', text)
-            elif idle > IDLE_MATRIX and matrix_was_on:
-                matrix_was_on = False
-                matrix('--brightness', '0')
+                    matrix_was_on = True
+                matrix('--eq', *([str(level)] * 9))
+            elif matrix_was_on:
+                matrix('--eq', *(['0'] * 9))
 
     def backlight_loop():
         global brightness
@@ -157,19 +156,13 @@ let
         if event.type != evdev.ecodes.EV_KEY or event.value != 1:
             continue
 
-        raw_name = evdev.ecodes.KEY[event.code]
-        key_name = raw_name if isinstance(raw_name, str) else raw_name[0]
-        char     = key_to_char(key_name)
-
         with lock:
             last_key_time = time.monotonic()
             brightness    = read_max_bl()
             write_bl(brightness)
-            if char is not None:
-                char_buf.append(char)
-                if len(char_buf) > 5:
-                    char_buf.pop(0)
-                pending_text = '''.join(char_buf)
+            pulses.append(last_key_time)
+            if len(pulses) > 50:
+                pulses = pulses[-50:]
   '';
 in
 {
