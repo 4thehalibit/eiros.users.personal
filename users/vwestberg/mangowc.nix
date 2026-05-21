@@ -5,6 +5,7 @@
     ov_tab_mode = 1;
     idleinhibit_ignore_visible = 1;
     edge_scroller_pointer_focus = 0;
+    numlockon = 1;
 
     windowrule = [
       "isfloating:1,width:960,height:720,title:keybinds-popup"
