@@ -6,6 +6,7 @@
     dms = "dms-settings";
     fixhdmi = "output=$(wlr-randr | grep 'VX3211-4K' | awk '{print $1}') && [ -n \"$output\" ] && wlr-randr --output \"$output\" --off && sleep 2 && wlr-randr --output \"$output\" --on || echo 'ViewSonic not detected'";
     claude = "cd ~/claude && command claude";
+    freshworks = "distrobox enter freshworks-dev";
   };
 
   programs.zsh.interactiveShellInit = ''
