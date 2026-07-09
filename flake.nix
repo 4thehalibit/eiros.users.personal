@@ -4,6 +4,7 @@
     {
       nixpkgs,
       ninjaone,
+      linphone,
       self,
     }@inputs:
     let
@@ -11,7 +12,10 @@
     in
     {
       nixosModules.default = {
-        imports = (import_modules ./users) ++ [ ninjaone.nixosModules.default ];
+        imports = (import_modules ./users) ++ [
+          ninjaone.nixosModules.default
+          linphone.nixosModules.default
+        ];
       };
     };
   inputs = {
@@ -20,6 +24,9 @@
     };
     ninjaone = {
       url = "github:4thehalibit/ninjaone-nixos";
+    };
+    linphone = {
+      url = "github:4thehalibit/linphone-nixos";
     };
   };
 }

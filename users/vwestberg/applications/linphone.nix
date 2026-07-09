@@ -1,6 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 {
-  config.environment.systemPackages = [
-    pkgs.linphone
-  ];
+  config.programs.linphone.enable = true;
 }
