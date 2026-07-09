@@ -11,7 +11,7 @@
 # username (vwestberg) + any non-empty password so it authenticates over TLS.
 { pkgs, ... }:
 let
-  tlsDir = "/var/lib/radicale/tls";
+  tlsDir = "/var/lib/radicale-certs";
   cert = "${tlsDir}/cert.pem";
   key = "${tlsDir}/key.pem";
 in
