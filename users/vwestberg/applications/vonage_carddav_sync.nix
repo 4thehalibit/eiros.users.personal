@@ -7,11 +7,13 @@
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "vonage-carddav-sync" ''
       set -eu
-      base="http://127.0.0.1:5232"
+      # Radicale is TLS on localhost with a self-signed cert; -k is fine here.
+      curl="${pkgs.curl}/bin/curl -k"
+      base="https://127.0.0.1:5232"
       book="$base/$USER/vonage"
       vcf="$HOME/Vonage/vonage-contacts.vcf"
 
-      if ! ${pkgs.curl}/bin/curl -s -o /dev/null --max-time 3 "$base/"; then
+      if ! $curl -s -o /dev/null --max-time 3 "$base/"; then
         echo "vonage-carddav-sync: Radicale not reachable at $base (is the service running?)" >&2
         exit 1
       fi
@@ -20,7 +22,7 @@
       vonage-vcard
 
       # ensure the address book exists (ignore error if it already does)
-      ${pkgs.curl}/bin/curl -s -o /dev/null -u "$USER:x" -X MKCOL "$book/" \
+      $curl -s -o /dev/null -u "$USER:x" -X MKCOL "$book/" \
         -H "Content-Type: application/xml" \
         --data '<?xml version="1.0" encoding="utf-8"?><D:mkcol xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav"><D:set><D:prop><D:resourcetype><D:collection/><C:addressbook/></D:resourcetype><D:displayname>Vonage</D:displayname></D:prop></D:set></D:mkcol>' || true
 
@@ -45,7 +47,7 @@ for chunk in data.split('END:VCARD'):
       ok=0
       fail=0
       for f in "$tmp"/*.vcf; do
-        code=$(${pkgs.curl}/bin/curl -s -o /dev/null -w "%{http_code}" -u "$USER:x" \
+        code=$($curl -s -o /dev/null -w "%{http_code}" -u "$USER:x" \
           -X PUT "$book/$(basename "$f")" \
           -H "Content-Type: text/vcard; charset=utf-8" --data-binary @"$f")
         case "$code" in
