@@ -1,26 +1,8 @@
 {
   "nodes": {
-    "linphone": {
-      "inputs": {
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1783611160,
-        "narHash": "sha256-Hc0gbhCPfaX+4jRNkuvBEmPBgW12wuQ6lygA3kxTQJo=",
-        "owner": "4thehalibit",
-        "repo": "linphone-nixos",
-        "rev": "be1686b355c4c5c7a08a47d3afc5070830108d18",
-        "type": "github"
-      },
-      "original": {
-        "owner": "4thehalibit",
-        "repo": "linphone-nixos",
-        "type": "github"
-      }
-    },
     "ninjaone": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
         "lastModified": 1779199008,
@@ -38,22 +20,6 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1783610024,
-        "narHash": "sha256-62TvoY2x7beqX33dYxbfmmVw7Tx44TNB3cK1cQu/tRM=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "e02c3f51ac5f5b80d1f7a736b62a168bf8168325",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
         "lastModified": 1779198640,
         "narHash": "sha256-lcrNgMTC3ubNgZs6csp1wy9w16RToifd0u1qRXi8e+I=",
         "owner": "nixos",
@@ -68,7 +34,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1777664919,
         "narHash": "sha256-bVkUEPMpfWfBV0qXkWbdVtfgM+e9CF/z61IufwvmQXc=",
@@ -84,11 +50,27 @@
         "type": "github"
       }
     },
+    "nixpkgs_linphone": {
+      "locked": {
+        "lastModified": 1735563628,
+        "narHash": "sha256-OnSAY7XDSx7CtDoqNh8jwVwh4xNL/2HaJxGjryLWzX8=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "b134951a4c9f3c995fd7be05f3243f8ecd65d798",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-24.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
-        "linphone": "linphone",
         "ninjaone": "ninjaone",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_2",
+        "nixpkgs_linphone": "nixpkgs_linphone"
       }
     }
   },
