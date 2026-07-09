@@ -90,6 +90,9 @@
     # Keybinding cheat sheet
     keybinds_cheatsheet = { modifier_keys = [ "SUPER" ]; flag_modifiers = [ "s" ]; key_symbol = "F1"; mangowc_command = "spawn"; command_arguments = "ghostty --title=keybinds-popup -e keybinds-popup"; };
 
+    # Vonage phone directory search
+    vonage_directory = { modifier_keys = [ "SUPER" "SHIFT" ]; flag_modifiers = [ "s" ]; key_symbol = "p"; mangowc_command = "spawn"; command_arguments = "ghostty --title=vonage-directory -e vonage-directory-popup"; };
+
     # LED matrix brightness
     kbd_brightness_down = { modifier_keys = [ "SUPER" ]; flag_modifiers = [ "s" ]; key_symbol = "F7"; mangowc_command = "spawn_shell"; command_arguments = "kbd-brightness-down"; };
     kbd_brightness_up   = { modifier_keys = [ "SUPER" ]; flag_modifiers = [ "s" ]; key_symbol = "F8"; mangowc_command = "spawn_shell"; command_arguments = "kbd-brightness-up"; };
