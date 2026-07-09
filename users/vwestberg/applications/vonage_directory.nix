@@ -16,21 +16,30 @@ ESC = chr(27)
 R   = ESC + '[0m'
 B   = ESC + '[1m'
 HDR = ESC + '[1;96m'
+TAB = chr(9)
+KEEP = ['User', 'Extension', 'Phone Number', 'Groups', 'Email']
 with open(sys.argv[1], newline=str()) as f:
     rows = [r for r in csv.reader(f) if any(c.strip() for c in r)]
 if not rows:
     sys.exit(0)
-ncol   = max(len(r) for r in rows)
-rows   = [r + [str()] * (ncol - len(r)) for r in rows]
+header = rows[0]
+kept   = [h for h in KEEP if h in header] or header
+idx    = [header.index(h) for h in kept]
+rows   = [[r[i] if i < len(r) else str() for i in idx] for r in rows]
+ncol   = len(idx)
+epos   = kept.index('Extension') if 'Extension' in kept else -1
 widths = [max(len(r[i]) for r in rows) for i in range(ncol)]
 def fmt(r, color=str()):
     return '  ' + '  '.join(color + r[i].ljust(widths[i]) + R for i in range(ncol))
-print(fmt(rows[0], HDR + B))
+print(fmt(rows[0], HDR + B) + TAB)
 for r in rows[1:]:
-    print(fmt(r))
+    print(fmt(r) + TAB + (r[epos] if epos >= 0 else str()))
       " "$csv" | ${pkgs.fzf}/bin/fzf --ansi --no-sort --layout=reverse --header-lines=1 \
-            --header="  Vonage Directory  (type to search, Esc to close)" \
-            --header-first --no-info --no-preview --bind="esc:abort,enter:abort"
+            --delimiter="\t" --with-nth=1 \
+            --header="  Vonage Directory  (type to search, Enter copies extension, Esc closes)" \
+            --header-first --no-info --no-preview \
+            --bind="esc:abort" \
+            --bind="enter:execute-silent(printf '%s' {2} | ${pkgs.wl-clipboard}/bin/wl-copy)+abort"
     '')
   ];
 }
