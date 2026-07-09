@@ -2,11 +2,11 @@
 {
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "vonage-directory-popup" ''
-      csv=$(ls -1 "$HOME"/vonage-directory/*.csv 2>/dev/null | head -n1)
+      csv=$(ls -1 "$HOME"/Vonage/*.csv 2>/dev/null | head -n1)
       if [ -z "$csv" ]; then
-        printf '\n  No CSV found in ~/vonage-directory/\n\n' | \
+        printf '\n  No CSV found in ~/Vonage/\n\n' | \
           ${pkgs.fzf}/bin/fzf --ansi --layout=reverse --no-info --no-preview \
-            --header="  Vonage Directory  (drop a .csv in ~/vonage-directory/)" \
+            --header="  Vonage Directory  (drop a .csv in ~/Vonage/)" \
             --header-first --bind="esc:abort,enter:abort"
         exit 0
       fi
