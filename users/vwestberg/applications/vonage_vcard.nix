@@ -18,6 +18,9 @@ def esc(v):
     v = v.replace(',', bs + ',')
     v = v.replace(chr(10), bs + 'n')
     return v
+def slug(s):
+    out = [ch if ch.isalnum() else '-' for ch in s]
+    return str().join(out).strip('-').lower()
 def split_name(full):
     parts = full.split()
     if not parts:
@@ -38,7 +41,9 @@ with open(src, newline=str()) as f, open(dst, 'w', newline='\r\n') as out:
             skipped += 1
             continue
         family, given = split_name(name)
+        uid = 'vonage-' + (slug(ext) or slug(phone) or slug(email) or slug(name))
         lines = ['BEGIN:VCARD', 'VERSION:3.0']
+        lines.append('UID:%s' % esc(uid))
         lines.append('N:%s;%s;;;' % (esc(family), esc(given)))
         lines.append('FN:%s' % esc(name))
         if ext:
